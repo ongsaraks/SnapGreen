@@ -5,17 +5,20 @@ import base64
 import requests
 from PIL import Image
 from dotenv import load_dotenv
-from services.trash_config import get_class_info
+try:
+    from services.trash_config import get_class_info
+except ModuleNotFoundError:
+    from trash_config import get_class_info
 
 # Load environment variables
 load_dotenv()
 
-ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY", "T7uEFXRKxnlKwmjBGbBD")
-ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "trash-classification-swoem")
-ROBOFLOW_MODEL_VERSION = os.getenv("ROBOFLOW_MODEL_VERSION", "3")
-ROBOFLOW_CONFIDENCE_THRESHOLD = float(os.getenv("ROBOFLOW_CONFIDENCE", "0.20"))
-ROBOFLOW_TIMEOUT = int(os.getenv("ROBOFLOW_TIMEOUT", "75"))
-ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "https://detect.roboflow.com")
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY", "")
+ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "trash-classification-swoem") or "trash-classification-swoem"
+ROBOFLOW_MODEL_VERSION = os.getenv("ROBOFLOW_MODEL_VERSION", "3") or "3"
+ROBOFLOW_CONFIDENCE_THRESHOLD = float(os.getenv("ROBOFLOW_CONFIDENCE", "0.20") or "0.20")
+ROBOFLOW_TIMEOUT = int(os.getenv("ROBOFLOW_TIMEOUT", "75") or "75")
+ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "https://detect.roboflow.com") or "https://detect.roboflow.com"
 
 INFERENCE_URL = f"{ROBOFLOW_API_URL.rstrip('/')}/{ROBOFLOW_MODEL_ID}/{ROBOFLOW_MODEL_VERSION}"
 FALLBACK_URL = f"https://serverless.roboflow.com/{ROBOFLOW_MODEL_ID}/{ROBOFLOW_MODEL_VERSION}"
