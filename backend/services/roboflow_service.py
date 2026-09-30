@@ -13,15 +13,14 @@ except ModuleNotFoundError:
 # Load environment variables
 load_dotenv()
 
-ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY", "")
-ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "trash-classification-swoem") or "trash-classification-swoem"
-ROBOFLOW_MODEL_VERSION = os.getenv("ROBOFLOW_MODEL_VERSION", "3") or "3"
-ROBOFLOW_CONFIDENCE_THRESHOLD = float(os.getenv("ROBOFLOW_CONFIDENCE", "0.20") or "0.20")
-ROBOFLOW_TIMEOUT = int(os.getenv("ROBOFLOW_TIMEOUT", "75") or "75")
-ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "https://detect.roboflow.com") or "https://detect.roboflow.com"
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
+ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID")
+ROBOFLOW_MODEL_VERSION = os.getenv("ROBOFLOW_MODEL_VERSION")
+ROBOFLOW_CONFIDENCE_THRESHOLD = float(os.getenv("ROBOFLOW_CONFIDENCE"))
+ROBOFLOW_TIMEOUT = int(os.getenv("ROBOFLOW_TIMEOUT"))
+ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL")
 
 INFERENCE_URL = f"{ROBOFLOW_API_URL.rstrip('/')}/{ROBOFLOW_MODEL_ID}/{ROBOFLOW_MODEL_VERSION}"
-FALLBACK_URL = f"https://serverless.roboflow.com/{ROBOFLOW_MODEL_ID}/{ROBOFLOW_MODEL_VERSION}"
 
 
 def warmup_roboflow():
@@ -85,15 +84,12 @@ def run_roboflow_detection(image_bytes: bytes, confidence_threshold: float = ROB
 
     res_data = None
     last_error = None
-    endpoints_to_try = [INFERENCE_URL]
-    if FALLBACK_URL != INFERENCE_URL:
-        endpoints_to_try.append(FALLBACK_URL)
+    retries = 2
 
-    for attempt, url in enumerate(endpoints_to_try, start=1):
+    for attempt in range(1, retries + 1):
         try:
-            print(f"[Roboflow] Attempt {attempt}/{len(endpoints_to_try)} querying {url}...")
             response = requests.post(
-                url,
+                INFERENCE_URL,
                 params=params,
                 data=b64_image,
                 headers=headers,
@@ -104,8 +100,8 @@ def run_roboflow_detection(image_bytes: bytes, confidence_threshold: float = ROB
             break
         except (requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
             last_error = e
-            print(f"[Roboflow Warning] Attempt {attempt}/{len(endpoints_to_try)} failed: {e}")
-            if attempt < len(endpoints_to_try):
+            print(f"[Roboflow Warning] Attempt {attempt}/{retries} failed: {e}")
+            if attempt < retries:
                 time.sleep(1.0)
 
     if res_data is None:
